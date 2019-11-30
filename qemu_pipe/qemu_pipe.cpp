@@ -24,6 +24,8 @@
 
 #include <android-base/file.h>
 
+#include <sys/socket.h>
+#include <sys/un.h>
 using android::base::ReadFully;
 using android::base::WriteFully;
 
@@ -41,13 +43,21 @@ int qemu_pipe_open(const char* pipeName) {
         return -1;
     }
 
-    int fd = TEMP_FAILURE_RETRY(open("/dev/qemu_pipe", O_RDWR));
+//    int fd = TEMP_FAILURE_RETRY(open("/dev/qemu_pipe", O_RDWR));
+    int fd = TEMP_FAILURE_RETRY(socket(AF_LOCAL, SOCK_STREAM, 0));
     if (fd < 0) {
         QEMU_PIPE_DEBUG("%s: Could not open /dev/qemu_pipe: %s", __FUNCTION__,
                         strerror(errno));
         return -1;
     }
-
+    struct sockaddr_un addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sun_family = AF_UNIX;
+    strncpy(addr.sun_path, "/dev/qemu_pipe", sizeof(addr.sun_path));
+    if (connect(fd, (struct sockaddr*) &addr, sizeof(addr)) < 0) {
+        close(fd);
+        return -1;
+    }
     // Write the pipe name, *including* the trailing zero which is necessary.
     size_t pipeNameLen = strlen(pipeName);
     if (WriteFully(fd, pipeName, pipeNameLen + 1U)) {

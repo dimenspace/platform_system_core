@@ -1089,7 +1089,7 @@ int fs_mgr_mount_all(Fstab* fstab, int mount_mode) {
     AvbUniquePtr avb_handle(nullptr);
 
     if (fstab->empty()) {
-        return FS_MGR_MNTALL_FAIL;
+        return FS_MGR_MNTALL_DEV_NOT_ENCRYPTABLE;
     }
 
     for (size_t i = 0; i < fstab->size(); i++) {

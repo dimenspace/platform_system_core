@@ -108,7 +108,7 @@ int FirstStageMain(int argc, char** argv) {
 
     std::vector<std::pair<std::string, int>> errors;
 #define CHECKCALL(x) \
-    if (x != 0) errors.emplace_back(#x " failed", errno);
+    if (x != 0) fprintf(stderr, "error %x occurs.. in %s %d. skip it....\n", errno, __func__, __LINE__);
 
     // Clear the umask.
     umask(0);
@@ -117,12 +117,12 @@ int FirstStageMain(int argc, char** argv) {
     CHECKCALL(setenv("PATH", _PATH_DEFPATH, 1));
     // Get the basic filesystem setup we need put together in the initramdisk
     // on / and then we'll let the rc file figure out the rest.
-    CHECKCALL(mount("tmpfs", "/dev", "tmpfs", MS_NOSUID, "mode=0755"));
-    CHECKCALL(mkdir("/dev/pts", 0755));
+//    CHECKCALL(mount("tmpfs", "/dev", "tmpfs", MS_NOSUID, "mode=0755"));
+//    CHECKCALL(mkdir("/dev/pts", 0755));
     CHECKCALL(mkdir("/dev/socket", 0755));
-    CHECKCALL(mount("devpts", "/dev/pts", "devpts", 0, NULL));
+//    CHECKCALL(mount("devpts", "/dev/pts", "devpts", 0, NULL));
 #define MAKE_STR(x) __STRING(x)
-    CHECKCALL(mount("proc", "/proc", "proc", 0, "hidepid=2,gid=" MAKE_STR(AID_READPROC)));
+//    CHECKCALL(mount("proc", "/proc", "proc", 0, "hidepid=2,gid=" MAKE_STR(AID_READPROC)));
 #undef MAKE_STR
     // Don't expose the raw commandline to unprivileged processes.
     CHECKCALL(chmod("/proc/cmdline", 0440));
@@ -167,10 +167,10 @@ int FirstStageMain(int argc, char** argv) {
                     "mode=0755,uid=0,gid=0"));
 #undef CHECKCALL
 
-    SetStdioToDevNull(argv);
+//    SetStdioToDevNull(argv);
     // Now that tmpfs is mounted on /dev and we have /dev/kmsg, we can actually
     // talk to the outside world...
-    InitKernelLogging(argv);
+//    InitKernelLogging(argv);
 
     if (!errors.empty()) {
         for (const auto& [error_string, error_errno] : errors) {

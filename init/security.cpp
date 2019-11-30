@@ -176,7 +176,7 @@ Result<Success> SetMmapRndBitsAction(const BuiltinArguments&) {
     LOG(ERROR) << "Unknown architecture";
 #endif
 
-    LOG(FATAL) << "Unable to set adequate mmap entropy value!";
+//    LOG(FATAL) << "Unable to set adequate mmap entropy value!";
     return Error();
 }
 
@@ -191,7 +191,7 @@ Result<Success> SetKptrRestrictAction(const BuiltinArguments&) {
     std::string path = KPTR_RESTRICT_PATH;
 
     if (!SetHighestAvailableOptionValue(path, KPTR_RESTRICT_MINVALUE, KPTR_RESTRICT_MAXVALUE)) {
-        LOG(FATAL) << "Unable to set adequate kptr_restrict value!";
+//        LOG(FATAL) << "Unable to set adequate kptr_restrict value!";
         return Error();
     }
     return Success();

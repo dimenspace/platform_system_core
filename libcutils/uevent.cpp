@@ -116,12 +116,14 @@ int uevent_open_socket(int buf_sz, bool passcred) {
      * want to avoid SO_RCVBUFFORCE, because it generates SELinux denials in
      * case we don't have CAP_NET_ADMIN. This is the case, for example, for
      * healthd. */
+#if 0
     if (buf_sz_readback < 2 * buf_sz) {
         if (setsockopt(s, SOL_SOCKET, SO_RCVBUFFORCE, &buf_sz, sizeof(buf_sz)) < 0) {
             close(s);
             return -1;
         }
     }
+#endif
 
     setsockopt(s, SOL_SOCKET, SO_PASSCRED, &on, sizeof(on));
 

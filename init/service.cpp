@@ -70,6 +70,7 @@ using android::base::WriteStringToFile;
 namespace android {
 namespace init {
 
+#if 0
 static Result<std::string> ComputeContextFromExecutable(const std::string& service_path) {
     std::string computed_context;
 
@@ -105,6 +106,7 @@ static Result<std::string> ComputeContextFromExecutable(const std::string& servi
     }
     return computed_context;
 }
+#endif
 
 Result<Success> Service::SetUpMountNamespace() const {
     constexpr unsigned int kSafeFlags = MS_NODEV | MS_NOEXEC | MS_NOSUID;
@@ -283,7 +285,7 @@ void Service::KillProcessGroup(int signal) {
 void Service::SetProcessAttributes() {
     for (const auto& rlimit : rlimits_) {
         if (setrlimit(rlimit.first, &rlimit.second) == -1) {
-            LOG(FATAL) << StringPrintf("setrlimit(%d, {rlim_cur=%ld, rlim_max=%ld}) failed",
+            LOG(ERROR) << StringPrintf("setrlimit(%d, {rlim_cur=%ld, rlim_max=%ld}) failed",
                                        rlimit.first, rlimit.second.rlim_cur, rlimit.second.rlim_max);
         }
     }
@@ -293,11 +295,11 @@ void Service::SetProcessAttributes() {
         // be locked, so don't change those.
         unsigned long securebits = prctl(PR_GET_SECUREBITS);
         if (securebits == -1UL) {
-            PLOG(FATAL) << "prctl(PR_GET_SECUREBITS) failed for " << name_;
+            PLOG(ERROR) << "prctl(PR_GET_SECUREBITS) failed for " << name_;
         }
         securebits |= SECBIT_KEEP_CAPS | SECBIT_KEEP_CAPS_LOCKED;
         if (prctl(PR_SET_SECUREBITS, securebits) != 0) {
-            PLOG(FATAL) << "prctl(PR_SET_SECUREBITS) failed for " << name_;
+            PLOG(ERROR) << "prctl(PR_SET_SECUREBITS) failed for " << name_;
         }
     }
 
@@ -317,14 +319,16 @@ void Service::SetProcessAttributes() {
             PLOG(FATAL) << "setuid failed for " << name_;
         }
     }
+#if 0
     if (!seclabel_.empty()) {
         if (setexeccon(seclabel_.c_str()) < 0) {
             PLOG(FATAL) << "cannot setexeccon('" << seclabel_ << "') for " << name_;
         }
     }
+#endif
     if (priority_ != 0) {
         if (setpriority(PRIO_PROCESS, 0, priority_) != 0) {
-            PLOG(FATAL) << "setpriority failed for " << name_;
+            PLOG(ERROR) << "setpriority failed for " << name_;
         }
     }
     if (capabilities_) {
@@ -932,7 +936,8 @@ Result<Success> Service::Start() {
         return ErrnoError() << "Cannot find '" << args_[0] << "'";
     }
 
-    std::string scon;
+    std::string scon = "";
+#if 0
     if (!seclabel_.empty()) {
         scon = seclabel_;
     } else {
@@ -942,7 +947,7 @@ Result<Success> Service::Start() {
         }
         scon = *result;
     }
-
+#endif
     if (!IsRuntimeApexReady() && !pre_apexd_) {
         // If this service is started before the runtime APEX gets available,
         // mark it as pre-apexd one. Note that this marking is permanent. So
@@ -1045,15 +1050,14 @@ Result<Success> Service::Start() {
 
         if (needs_console) {
             setsid();
-            OpenConsole();
+//            OpenConsole();
         } else {
-            ZapStdio();
+//            ZapStdio();
         }
 
         // As requested, set our gid, supplemental gids, uid, context, and
         // priority. Aborts on failure.
         SetProcessAttributes();
-
         if (!ExpandArgsAndExecv(args_, sigstop_)) {
             PLOG(ERROR) << "cannot execve('" << args_[0] << "')";
         }

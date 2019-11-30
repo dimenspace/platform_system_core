@@ -52,7 +52,6 @@ int main(int argc, char** argv) {
 #if __has_feature(address_sanitizer)
     __asan_set_error_report_callback(AsanReportCallback);
 #endif
-
     if (!strcmp(basename(argv[0]), "ueventd")) {
         return ueventd_main(argc, argv);
     }
@@ -66,7 +65,8 @@ int main(int argc, char** argv) {
         }
 
         if (!strcmp(argv[1], "selinux_setup")) {
-            return SetupSelinux(argv);
+//            return SetupSelinux(argv);
+            return SecondStageMain(argc, argv);
         }
 
         if (!strcmp(argv[1], "second_stage")) {

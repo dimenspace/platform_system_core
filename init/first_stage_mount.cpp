@@ -227,12 +227,15 @@ FirstStageMount::FirstStageMount(Fstab fstab)
 }
 
 std::unique_ptr<FirstStageMount> FirstStageMount::Create() {
-    auto fstab = ReadFirstStageFstab();
-    if (IsDtVbmetaCompatible(fstab)) {
-        return std::make_unique<FirstStageMountVBootV2>(std::move(fstab));
-    } else {
-        return std::make_unique<FirstStageMountVBootV1>(std::move(fstab));
-    }
+//    auto fstab = ReadFirstStageFstab();
+//    if (IsDtVbmetaCompatible(fstab)) {
+//        return std::make_unique<FirstStageMountVBootV2>(std::move(fstab));
+//    } else {
+//        return std::make_unique<FirstStageMountVBootV1>(std::move(fstab));
+//    }
+      Fstab dummy;
+      return std::make_unique<FirstStageMountVBootV1>(dummy);
+
 }
 
 bool FirstStageMount::DoFirstStageMount() {
@@ -241,7 +244,6 @@ bool FirstStageMount::DoFirstStageMount() {
         LOG(INFO) << "First stage mount skipped (missing/incompatible/empty fstab in device tree)";
         return true;
     }
-
     if (!InitDevices()) return false;
 
     if (!CreateLogicalPartitions()) return false;

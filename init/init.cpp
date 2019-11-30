@@ -83,7 +83,7 @@ namespace init {
 
 static int property_triggers_enabled = 0;
 
-static char qemu[32];
+//static char qemu[32];
 
 std::string default_console = "/dev/console";
 
@@ -338,10 +338,11 @@ static Result<Success> wait_for_coldboot_done_action(const BuiltinArguments& arg
     // property. We still panic if it takes more than a minute though,
     // because any build that slow isn't likely to boot at all, and we'd
     // rather any test lab devices fail back to the bootloader.
+#if 0
     if (wait_for_file(COLDBOOT_DONE, 60s) < 0) {
         LOG(FATAL) << "Timed out waiting for " COLDBOOT_DONE;
     }
-
+#endif
     property_set("ro.boottime.init.cold_boot_wait", std::to_string(t.duration().count()));
     return Success();
 }
@@ -364,7 +365,7 @@ static Result<Success> SetupCgroupsAction(const BuiltinArguments&) {
 
     return Success();
 }
-
+#if 0
 static void import_kernel_nv(const std::string& key, const std::string& value, bool for_emulator) {
     if (key.empty()) return;
 
@@ -380,6 +381,7 @@ static void import_kernel_nv(const std::string& key, const std::string& value, b
         property_set("ro.boot." + key.substr(12), value);
     }
 }
+#endif
 
 static void export_oem_lock_status() {
     if (!android::base::GetBoolProperty("ro.oem_unlock_supported", false)) {
@@ -404,7 +406,7 @@ static void export_kernel_boot_props() {
         { "ro.boot.mode",       "ro.bootmode",   "unknown", },
         { "ro.boot.baseband",   "ro.baseband",   "unknown", },
         { "ro.boot.bootloader", "ro.bootloader", "unknown", },
-        { "ro.boot.hardware",   "ro.hardware",   "unknown", },
+        { "ro.boot.hardware",   "ro.hardware",   "ranchu", },
         { "ro.boot.revision",   "ro.revision",   "0", },
     };
     for (const auto& prop : prop_map) {
@@ -413,7 +415,7 @@ static void export_kernel_boot_props() {
             property_set(prop.dst_prop, value);
     }
 }
-
+#if 0
 static void process_kernel_dt() {
     if (!is_android_dt_value_expected("compatible", "android,firmware")) {
         return;
@@ -445,7 +447,7 @@ static void process_kernel_cmdline() {
     import_kernel_cmdline(false, import_kernel_nv);
     if (qemu[0]) import_kernel_cmdline(true, import_kernel_nv);
 }
-
+#endif
 static Result<Success> property_enable_triggers_action(const BuiltinArguments& args) {
     /* Enable property triggers. */
     property_triggers_enabled = 1;
@@ -599,7 +601,7 @@ void HandleKeychord(const std::vector<int>& keycodes) {
         LOG(ERROR) << "Service for keychord " << android::base::Join(keycodes, ' ') << " not found";
     }
 }
-
+#if 0
 static void GlobalSeccomp() {
     import_kernel_cmdline(false, [](const std::string& key, const std::string& value,
                                     bool in_qemu) {
@@ -608,7 +610,7 @@ static void GlobalSeccomp() {
         }
     });
 }
-
+#endif
 static void UmountDebugRamdisk() {
     if (umount("/debug_ramdisk") != 0) {
         LOG(ERROR) << "Failed to umount /debug_ramdisk";
@@ -616,21 +618,24 @@ static void UmountDebugRamdisk() {
 }
 
 int SecondStageMain(int argc, char** argv) {
+#if 0
     if (REBOOT_BOOTLOADER_ON_PANIC) {
         InstallRebootSignalHandlers();
     }
 
     SetStdioToDevNull(argv);
     InitKernelLogging(argv);
+#endif
     LOG(INFO) << "init second stage started!";
 
     // Set init and its forked children's oom_adj.
+
     if (auto result = WriteFile("/proc/1/oom_score_adj", "-1000"); !result) {
         LOG(ERROR) << "Unable to write -1000 to /proc/1/oom_score_adj: " << result.error();
     }
 
     // Enable seccomp if global boot option was passed (otherwise it is enabled in zygote).
-    GlobalSeccomp();
+//    GlobalSeccomp();
 
     // Set up a session keyring that all processes will have access to. It
     // will hold things like FBE encryption keys. No process should override
@@ -644,8 +649,8 @@ int SecondStageMain(int argc, char** argv) {
 
     // If arguments are passed both on the command line and in DT,
     // properties set in DT always have priority over the command-line ones.
-    process_kernel_dt();
-    process_kernel_cmdline();
+//    process_kernel_dt();
+//    process_kernel_cmdline();
 
     // Propagate the kernel variables to internal variables
     // used by init as well as the current required properties.
@@ -653,13 +658,14 @@ int SecondStageMain(int argc, char** argv) {
 
     // Make the time that init started available for bootstat to log.
     property_set("ro.boottime.init", getenv("INIT_STARTED_AT"));
-    property_set("ro.boottime.init.selinux", getenv("INIT_SELINUX_TOOK"));
+//    property_set("ro.boottime.init.selinux", getenv("INIT_SELINUX_TOOK"));
 
     // Set libavb version for Framework-only OTA match in Treble build.
     const char* avb_version = getenv("INIT_AVB_VERSION");
     if (avb_version) property_set("ro.boot.avb_version", avb_version);
 
     // See if need to load debug props to allow adb root, when the device is unlocked.
+
     const char* force_debuggable_env = getenv("INIT_FORCE_DEBUGGABLE");
     if (force_debuggable_env && AvbHandle::IsDeviceUnlocked()) {
         load_debug_prop = "true"s == force_debuggable_env;
@@ -672,21 +678,22 @@ int SecondStageMain(int argc, char** argv) {
     unsetenv("INIT_FORCE_DEBUGGABLE");
 
     // Now set up SELinux for second stage.
-    SelinuxSetupKernelLogging();
-    SelabelInitialize();
-    SelinuxRestoreContext();
+//    SelinuxSetupKernelLogging();
+//    SelabelInitialize();
+//    SelinuxRestoreContext();
 
     Epoll epoll;
+
     if (auto result = epoll.Open(); !result) {
         PLOG(FATAL) << result.error();
     }
-
     InstallSignalFdHandler(&epoll);
 
     property_load_boot_defaults(load_debug_prop);
     UmountDebugRamdisk();
     fs_mgr_vendor_overlay_mount_all();
     export_oem_lock_status();
+
     StartPropertyService(&epoll);
     MountHandler mount_handler(&epoll);
     set_usb_controller();
@@ -711,9 +718,9 @@ int SecondStageMain(int argc, char** argv) {
 
     // Make the GSI status available before scripts start running.
     if (android::gsi::IsGsiRunning()) {
-        property_set("ro.gsid.image_running", "1");
+       property_set("ro.gsid.image_running", "1");
     } else {
-        property_set("ro.gsid.image_running", "0");
+       property_set("ro.gsid.image_running", "0");
     }
 
     am.QueueBuiltinAction(SetupCgroupsAction, "SetupCgroups");

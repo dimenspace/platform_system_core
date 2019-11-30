@@ -37,11 +37,11 @@
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
 #include <cutils/sockets.h>
-#include <selinux/android.h>
+//#include <selinux/android.h>
 
 #if defined(__ANDROID__)
 #include "reboot_utils.h"
-#include "selinux.h"
+//#include "selinux.h"
 #else
 #include "host_init_stubs.h"
 #endif
@@ -83,12 +83,14 @@ Result<uid_t> DecodeUid(const std::string& name) {
  */
 int CreateSocket(const char* name, int type, bool passcred, mode_t perm, uid_t uid, gid_t gid,
                  const char* socketcon) {
+#if 0
     if (socketcon) {
         if (setsockcreatecon(socketcon) == -1) {
             PLOG(ERROR) << "setsockcreatecon(\"" << socketcon << "\") failed";
             return -1;
         }
     }
+#endif
 
     android::base::unique_fd fd(socket(PF_UNIX, type, 0));
     if (fd < 0) {
@@ -96,24 +98,24 @@ int CreateSocket(const char* name, int type, bool passcred, mode_t perm, uid_t u
         return -1;
     }
 
-    if (socketcon) setsockcreatecon(NULL);
+//    if (socketcon) setsockcreatecon(NULL);
 
     struct sockaddr_un addr;
     memset(&addr, 0 , sizeof(addr));
     addr.sun_family = AF_UNIX;
     snprintf(addr.sun_path, sizeof(addr.sun_path), ANDROID_SOCKET_DIR"/%s",
              name);
-
     if ((unlink(addr.sun_path) != 0) && (errno != ENOENT)) {
         PLOG(ERROR) << "Failed to unlink old socket '" << name << "'";
         return -1;
     }
 
+#if 0
     std::string secontext;
     if (SelabelLookupFileContext(addr.sun_path, S_IFSOCK, &secontext) && !secontext.empty()) {
         setfscreatecon(secontext.c_str());
     }
-
+#endif
     if (passcred) {
         int on = 1;
         if (setsockopt(fd, SOL_SOCKET, SO_PASSCRED, &on, sizeof(on))) {
@@ -121,15 +123,16 @@ int CreateSocket(const char* name, int type, bool passcred, mode_t perm, uid_t u
             return -1;
         }
     }
-
     int ret = bind(fd, (struct sockaddr *) &addr, sizeof (addr));
-    int savederrno = errno;
 
+    int savederrno = errno;
+#if 0
     if (!secontext.empty()) {
         setfscreatecon(nullptr);
     }
-
+#endif
     if (ret) {
+        fprintf(stderr, "%s %d %s\n", __func__, __LINE__, strerror(errno));
         errno = savederrno;
         PLOG(ERROR) << "Failed to bind socket '" << name << "'";
         goto out_unlink;
@@ -181,19 +184,20 @@ Result<std::string> ReadFile(const std::string& path) {
 }
 
 static int OpenFile(const std::string& path, int flags, mode_t mode) {
+#if 0
     std::string secontext;
     if (SelabelLookupFileContext(path, mode, &secontext) && !secontext.empty()) {
         setfscreatecon(secontext.c_str());
     }
-
+#endif
     int rc = open(path.c_str(), flags, mode);
-
+#if 0
     if (!secontext.empty()) {
         int save_errno = errno;
         setfscreatecon(nullptr);
         errno = save_errno;
     }
-
+#endif
     return rc;
 }
 
@@ -252,18 +256,20 @@ void import_kernel_cmdline(bool in_qemu,
 }
 
 bool make_dir(const std::string& path, mode_t mode) {
+#if 0
     std::string secontext;
     if (SelabelLookupFileContext(path, mode, &secontext) && !secontext.empty()) {
         setfscreatecon(secontext.c_str());
     }
-
+#endif
     int rc = mkdir(path.c_str(), mode);
-
+#if 0
     if (!secontext.empty()) {
         int save_errno = errno;
         setfscreatecon(nullptr);
         errno = save_errno;
     }
+#endif
 
     return rc == 0;
 }

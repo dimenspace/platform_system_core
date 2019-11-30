@@ -918,6 +918,7 @@ void property_load_boot_defaults(bool load_debug_prop) {
     update_sys_usb_config();
 }
 
+#if 0
 static int SelinuxAuditCallback(void* data, security_class_t /*cls*/, char* buf, size_t len) {
     auto* d = reinterpret_cast<PropertyAuditData*>(data);
 
@@ -930,6 +931,7 @@ static int SelinuxAuditCallback(void* data, security_class_t /*cls*/, char* buf,
              d->cr->gid);
     return 0;
 }
+#endif
 
 bool LoadPropertyInfoFromFile(const std::string& filename,
                               std::vector<PropertyInfoEntry>* property_infos) {
@@ -1001,10 +1003,11 @@ void CreateSerializedPropertyInfo() {
 }
 
 void StartPropertyService(Epoll* epoll) {
+#if 0
     selinux_callback cb;
     cb.func_audit = SelinuxAuditCallback;
     selinux_set_callback(SELINUX_CB_AUDIT, cb);
-
+#endif
     property_set("ro.property_service.version", "2");
 
     property_set_fd = CreateSocket(PROP_SERVICE_NAME, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,

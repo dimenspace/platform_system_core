@@ -62,6 +62,7 @@ static bool supports_esdfs(void) {
 static bool should_use_sdcardfs(void) {
     char property[PROPERTY_VALUE_MAX];
 
+    return false;
     // Allow user to have a strong opinion about state
     property_get(PROP_SDCARDFS_USER, property, "");
     if (!strcmp(property, "force_on")) {
@@ -118,9 +119,10 @@ static bool sdcardfs_setup(const std::string& source_path, const std::string& de
 
         auto opts = android::base::StringPrintf("fsuid=%d,fsgid=%d,%smask=%d,userid=%d,gid=%d",
                                                 fsuid, fsgid, new_opts.c_str(), mask, userid, gid);
-        if (mount(source_path.c_str(), dest_path.c_str(), use_esdfs ? "esdfs" : "sdcardfs",
+        if (mount(source_path.c_str(), dest_path.c_str(), "sysfs",
                   MS_NOSUID | MS_NODEV | MS_NOEXEC | MS_NOATIME, opts.c_str()) == -1) {
-            PLOG(WARNING) << "Failed to mount sdcardfs with options " << opts;
+                PLOG(WARNING) << "soure_path: " << source_path.c_str() << "  dest_path: " << dest_path.c_str() << " use_esdfs:" << use_esdfs;
+		PLOG(WARNING) << "Failed to mount sdcardfs with options " << opts;
         } else {
             return true;
         }
@@ -139,7 +141,7 @@ static bool sdcardfs_setup_bind_remount(const std::string& source_path, const st
         return false;
     }
 
-    if (mount(source_path.c_str(), dest_path.c_str(), "none",
+    if (mount(source_path.c_str(), dest_path.c_str(), "sysfs",
             MS_REMOUNT | MS_NOSUID | MS_NODEV | MS_NOEXEC | MS_NOATIME, opts.c_str()) != 0) {
         PLOG(ERROR) << "failed to mount sdcardfs filesystem";
         if (umount2(dest_path.c_str(), MNT_DETACH))
@@ -187,7 +189,9 @@ static void run_sdcardfs(const std::string& source_path, const std::string& labe
             !sdcardfs_setup_secondary(dest_path_default, source_path, dest_path_full, uid, gid,
                                       multi_user, userid, AID_EVERYBODY, 0007, derive_gid,
                                       default_normal, unshared_obb, use_esdfs)) {
-            LOG(FATAL) << "failed to sdcardfs_setup";
+            
+		PLOG(WARNING) << "ssss soure_path: " << source_path << " multi_user:" << multi_user << "  dest_path_default:" << dest_path_default << " device_gid :" << derive_gid << " userid:" << userid;
+		LOG(FATAL) << "failed to sdcardfs_setup";
         }
     } else {
         // Physical storage is readable by all users on device, but

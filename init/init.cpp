@@ -618,16 +618,15 @@ static void UmountDebugRamdisk() {
 }
 
 int SecondStageMain(int argc, char** argv) {
-#if 0
+//#if 0
     if (REBOOT_BOOTLOADER_ON_PANIC) {
         InstallRebootSignalHandlers();
     }
 
     SetStdioToDevNull(argv);
     InitKernelLogging(argv);
-#endif
+//#endif
     LOG(INFO) << "init second stage started!";
-
     // Set init and its forked children's oom_adj.
 
     if (auto result = WriteFile("/proc/1/oom_score_adj", "-1000"); !result) {

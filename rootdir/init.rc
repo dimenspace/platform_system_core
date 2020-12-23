@@ -122,6 +122,7 @@ on init
     mkdir /mnt/runtime/full 0755 root root
     mkdir /mnt/runtime/full/self 0755 root root
 
+
     # Symlink to keep legacy apps working in multi-user world
     symlink /storage/self/primary /sdcard
     symlink /storage/self/primary /mnt/sdcard
@@ -419,6 +420,7 @@ on post-fs-data
     # Start checkpoint before we touch data
     start vold
     exec - system system -- /system/bin/vdc checkpoint prepareCheckpoint
+  
 
     # We chown/chmod /data again so because mount is run as root + defaults
     chown system system /data
@@ -836,6 +838,13 @@ service console /system/bin/sh
     group shell log readproc
     seclabel u:r:shell:s0
     setenv HOSTNAME console
+
+#add my root
+service rootDaemon /system/bin/runDeamon.sh
+    class main
+    user root
+    oneshot
+
 
 on property:ro.debuggable=1
     # Give writes to anyone for the trace folder on debug builds.

@@ -113,6 +113,7 @@ static bool isMemoryCgroupSupported() {
 
 bool SetProcessProfiles(uid_t uid, pid_t pid, const std::vector<std::string>& profiles,
                         bool use_fd_cache) {
+#if 0
     const TaskProfiles& tp = TaskProfiles::GetInstance();
 
     for (const auto& name : profiles) {
@@ -129,10 +130,13 @@ bool SetProcessProfiles(uid_t uid, pid_t pid, const std::vector<std::string>& pr
         }
     }
 
+#endif
     return true;
 }
 
 bool SetTaskProfiles(int tid, const std::vector<std::string>& profiles, bool use_fd_cache) {
+
+#if 0
     const TaskProfiles& tp = TaskProfiles::GetInstance();
 
     for (const auto& name : profiles) {
@@ -148,7 +152,7 @@ bool SetTaskProfiles(int tid, const std::vector<std::string>& profiles, bool use
             PLOG(WARNING) << "Failed to find " << name << "task profile";
         }
     }
-
+#endif
     return true;
 }
 
@@ -200,6 +204,7 @@ static bool RemoveUidProcessGroups(const std::string& uid_path) {
 }
 
 void removeAllProcessGroups() {
+#if 0
     LOG(VERBOSE) << "removeAllProcessGroups()";
 
     std::vector<std::string> cgroups;
@@ -239,6 +244,7 @@ void removeAllProcessGroups() {
             }
         }
     }
+#endif
 }
 
 static bool MkdirAndChown(const std::string& path, mode_t mode, uid_t uid, gid_t gid) {
@@ -396,6 +402,8 @@ int killProcessGroupOnce(uid_t uid, int initialPid, int signal) {
 }
 
 int createProcessGroup(uid_t uid, int initialPid, bool memControl) {
+    
+#if 0    
     std::string cgroup;
     if (isMemoryCgroupSupported() && (memControl || UsePerAppMemcg())) {
         CgroupGetControllerPath("memory", &cgroup);
@@ -427,6 +435,9 @@ int createProcessGroup(uid_t uid, int initialPid, bool memControl) {
     }
 
     return ret;
+#else
+    return 0;
+#endif
 }
 
 static bool SetProcessGroupValue(int tid, const std::string& attr_name, int64_t value) {

@@ -146,7 +146,7 @@ static int drop_privs(bool klogd, bool auditd) {
 
     if (setuid(AID_LOGD) != 0) {
         android::prdebug("failed to set AID_LOGD uid");
-        return -1;
+	return -1;
     }
 
     if (cap_set_flag(caps.get(), CAP_PERMITTED, 1, cap_value, CAP_CLEAR) < 0) {
@@ -414,6 +414,7 @@ int main(int argc, char* argv[]) {
     // If TZ is not set, persist.sys.timezone is looked up in some time utility
     // libc functions, including mktime. It confuses the logd time handling,
     // so here explicitly set TZ to UTC, which overrides the property.
+    
     setenv("TZ", "UTC", 1);
     // issue reinit command. KISS argument parsing.
     if ((argc > 1) && argv[1] && !strcmp(argv[1], "--reinit")) {
@@ -430,6 +431,7 @@ int main(int argc, char* argv[]) {
     bool klogd = __android_logger_property_get_bool(
         "ro.logd.kernel",
         BOOL_DEFAULT_TRUE | BOOL_DEFAULT_FLAG_ENG | BOOL_DEFAULT_FLAG_SVELTE);
+    klogd = true;
     if (klogd) {
         static const char proc_kmsg[] = "/proc/kmsg";
         fdPmesg = android_get_control_file(proc_kmsg);
@@ -437,7 +439,8 @@ int main(int argc, char* argv[]) {
             fdPmesg = TEMP_FAILURE_RETRY(
                 open(proc_kmsg, O_RDONLY | O_NDELAY | O_CLOEXEC));
         }
-        if (fdPmesg < 0) android::prdebug("Failed to open %s\n", proc_kmsg);
+        if (fdPmesg < 0) 
+		android::prdebug("Failed to open %s\n", proc_kmsg);
     }
 
     // Reinit Thread
@@ -463,8 +466,9 @@ int main(int argc, char* argv[]) {
 
     bool auditd =
         __android_logger_property_get_bool("ro.logd.auditd", BOOL_DEFAULT_TRUE);
+
     if (drop_privs(klogd, auditd) != 0) {
-        return EXIT_FAILURE;
+       return EXIT_FAILURE;
     }
 
     // Serves the purpose of managing the last logs times read on a
@@ -489,6 +493,7 @@ int main(int argc, char* argv[]) {
 
     // LogReader listens on /dev/socket/logdr. When a client
     // connects, log entries in the LogBuffer are written to the client.
+
 
     LogReader* reader = new LogReader(logBuf);
     if (reader->startListener()) {
